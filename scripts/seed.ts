@@ -45,15 +45,19 @@ async function main() {
     } else {
       const password = process.env.ADMIN_PASSWORD;
       if (!password || password.length < 10) {
-        throw new Error("ADMIN_PASSWORD (10+ characters) is required to create the admin account.");
+        // Don't fail the deploy: the app works, the admin just can't sign in yet.
+        console.warn(
+          `WARNING: ${adminEmail} not created. Set ADMIN_PASSWORD (10+ characters) and redeploy to create the admin account.`,
+        );
+      } else {
+        const admin = await createPasswordUser(db, {
+          email: adminEmail,
+          name: process.env.ADMIN_NAME ?? "Admin",
+          role: "admin",
+          password,
+        });
+        console.log(`Admin: ${admin.email} created.`);
       }
-      const admin = await createPasswordUser(db, {
-        email: adminEmail,
-        name: process.env.ADMIN_NAME ?? "Admin",
-        role: "admin",
-        password,
-      });
-      console.log(`Admin: ${admin.email} created.`);
     }
   } else {
     console.log("ADMIN_EMAIL not set; skipping admin account.");
