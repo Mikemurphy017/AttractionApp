@@ -1,9 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  experimental: {
+    // Enables forbidden() for role checks (lib/authz.ts).
+    authInterrupts: true,
+  },
   turbopack: {
     rules: {
       "*.css": {

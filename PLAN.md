@@ -1,5 +1,15 @@
 # Attractio — Build Plan
 
+> ## Decisions log (these override anything below)
+>
+> **Nov 17, 2026, Bluestone kickoff answers**
+> - **Hosting and database: Railway only.** No Supabase. Postgres runs on Railway; schema and migrations use Drizzle; access control is enforced in the app layer (`lib/authz.ts`) instead of row-level security.
+> - **Auth: email + password** (Better Auth). Self-signup is off; the admin creates every account.
+> - **Roles:** `admin` (Bluestone; Mike is the admin and has an admin dashboard), `va` (works several advisors, as assigned by the admin), `advisor` (sees only their own data).
+> - **Data: public sources first, not Apollo.** SEC EDGAR (Form D, 8-K, S-1, Form 4), GDELT and Google News RSS are the primary signal sources. Apollo is dropped as the primary provider. How LinkedIn URLs and verified emails are obtained is an open question for Phase 2 (see CLAUDE.md).
+> - **Sample data to start:** seed sample advisors, a VA and logins.
+> - **Cadence:** messages at **24 hours, 3 days, 5 days and 14 days after the LinkedIn connection** is accepted, stored in the `cadence_steps` config table. This replaces the opener + 2 follow-ups timing table below.
+
 ## What we're building
 
 Attractio is a web app that delivers **25 ranked, signal-backed prospects per day** for a financial advisor, each with a LinkedIn URL, a verified email, and a ready-to-send TextTonality® sequence (opener + 2 follow-ups with ideal send times). **It researches and writes; it never sends.**
@@ -35,7 +45,7 @@ Use licensed data APIs for every contact field. **Never scrape LinkedIn**: it br
 ### Stack
 
 - **App:** Next.js (TypeScript) + Tailwind, deployed on Railway (already connected) or Vercel.
-- **Database + auth:** Supabase (Postgres, row-level security, pgvector for pattern matching later).
+- **Database + auth:** Postgres on Railway (Drizzle ORM, pgvector later) + Better Auth email/password. *(Originally Supabase; changed Nov 17, 2026.)*
 - **Jobs:** a nightly worker (Railway cron or Inngest) that runs the pipeline per advisor.
 - **AI:** Claude API for signal summarization and message writing; Python service (scikit-learn / LightGBM) for the prediction model once there's outcome data.
 
@@ -161,11 +171,11 @@ Read PLAN.md fully. We're building Attractio, the app it describes. Before writi
 
 ### Phase 1 — Database, auth, advisor settings
 
-Implement the Data model section of PLAN.md as Supabase migrations with row-level security (advisors see only their own data; admin sees all). Build login and the Advisor settings screen with the ICP builder. Seed two sample advisors: one targeting tech executives with equity comp, one targeting business owners near exit.
+Implement the Data model section of PLAN.md as Drizzle migrations on Postgres with app-layer access control (advisors see only their own data; VAs see their assigned advisors; admin sees all). Build login and the Advisor settings screen with the ICP builder. Seed two sample advisors: one targeting tech executives with equity comp, one targeting business owners near exit.
 
 ### Phase 2 — Data adapters and the daily pipeline (rules only)
 
-Build adapters in /lib/sources for Apollo (people search, enrichment, email verification, job changes), SEC EDGAR (Form D, 8-K, S-1, Form 4), Crunchbase (funding), and NewsAPI. Each adapter has the same interface, caches responses, logs credit usage, and has a mock mode for tests. Then build the nightly pipeline from the Daily pipeline section: pull ~150 candidates per advisor, attach signals, apply the gate, compute the rule score with weights from a config table, dedupe, and save the top 25 to daily_lists. Add a manual "Run now" button in Admin. Show me a run for one sample advisor.
+Build adapters in /lib/sources for SEC EDGAR (Form D, 8-K, S-1, Form 4), GDELT and Google News RSS, plus a CSV-upload adapter, and whatever contact source is chosen for LinkedIn URLs and verified emails (public data first; Apollo is not the primary). Each adapter has the same interface, caches responses, logs credit usage, and has a mock mode for tests. Then build the nightly pipeline from the Daily pipeline section: pull ~150 candidates per advisor, attach signals, apply the gate, compute the rule score with weights from a config table, dedupe, and save the top 25 to daily_lists. Add a manual "Run now" button in Admin. Show me a run for one sample advisor.
 
 ### Phase 3 — Today screen and prospect detail
 
@@ -173,7 +183,7 @@ Build the Today and Prospect detail screens from the UI screens section. Each ca
 
 ### Phase 4 — TextTonality message engine
 
-Build the message engine from the TextTonality section. Load /prompts/texttonality.md at runtime (I'll fill it in; create it with placeholder headings only). Generate opener, FU1 and FU2 for LinkedIn and email in one Claude API call returning JSON, then run the checker pass for banned phrases, compliance issues, length caps and missing structure, regenerating once on failure. Add suggested send times per the defaults table, converted to the prospect's time zone. Store original and edited versions of every message.
+Build the message engine from the TextTonality section. Load /prompts/texttonality.md at runtime (I'll fill it in; create it with placeholder headings only). Generate every cadence step (connection note, then 24h / day 3 / day 5 / day 14 messages) for LinkedIn and email in one Claude API call returning JSON, then run the checker pass for banned phrases, compliance issues, length caps and missing structure, regenerating once on failure. Add suggested send times per the defaults table, converted to the prospect's time zone. Store original and edited versions of every message.
 
 ### Phase 5 — Outcomes and the prediction layer
 
