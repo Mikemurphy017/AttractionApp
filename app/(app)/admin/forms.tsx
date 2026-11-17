@@ -2,7 +2,7 @@
 
 import { useActionState, useRef } from "react";
 import { Button, Field, FormMessage, inputClass } from "@/components/ui";
-import { ROLE_LABELS } from "@/lib/constants";
+import { MIN_PASSWORD_LENGTH, ROLE_LABELS } from "@/lib/constants";
 import type { UserRole } from "@/lib/db/schema";
 import {
   changeUserRole,
@@ -37,7 +37,7 @@ export function CreateUserForm() {
         </select>
       </Field>
       <Field label="Temporary password">
-        <input name="password" type="text" minLength={10} required autoComplete="off" className={inputClass} />
+        <input name="password" type="text" minLength={MIN_PASSWORD_LENGTH} required autoComplete="off" className={inputClass} />
       </Field>
       <Button type="submit" disabled={pending}>
         {pending ? "Creating…" : "Create user"}
@@ -163,7 +163,7 @@ export function ResetPasswordForm({ userId }: { userId: string }) {
         <input
           name="password"
           type="text"
-          minLength={10}
+          minLength={MIN_PASSWORD_LENGTH}
           required
           placeholder="New password"
           autoComplete="off"

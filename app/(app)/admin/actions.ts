@@ -4,12 +4,15 @@ import { and, eq, inArray, notInArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/authz";
+import { MIN_PASSWORD_LENGTH } from "@/lib/constants";
 import { db, schema } from "@/lib/db";
 import { createPasswordUser, findUserByEmail, setUserPassword } from "@/lib/users";
 
 export type ActionState = { error?: string; message?: string } | null;
 
-const password = z.string().min(10, "Password must be at least 10 characters").max(128);
+const password = z
+  .string()
+  .min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters`).max(128);
 
 async function audit(actorUserId: string, action: string, entity: string, entityId: string | null, data?: unknown) {
   await db.insert(schema.auditLog).values({ actorUserId, action, entity, entityId, data: data ?? null });

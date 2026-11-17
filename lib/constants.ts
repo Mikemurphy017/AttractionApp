@@ -20,3 +20,6 @@ export const US_TIMEZONES = [
 ] as const;
 
 export const ROLE_LABELS = { admin: "Admin", va: "VA", advisor: "Advisor" } as const;
+
+/** Single source of truth for password length (auth config, seed, admin forms). */
+export const MIN_PASSWORD_LENGTH = 8;

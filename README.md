@@ -36,7 +36,7 @@ Then edit `.env.local` and set:
 - `DATABASE_URL`: the default matches the database above
 - `BETTER_AUTH_SECRET`: generate one with `openssl rand -base64 32`
 - `ADMIN_EMAIL`, `ADMIN_NAME` and `ADMIN_PASSWORD`: your admin login
-- `SEED_PASSWORD`: shared password for the sample logins (10+ characters)
+- `SEED_PASSWORD`: shared password for the sample logins (8+ characters)
 
 Apply migrations:
 

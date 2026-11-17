@@ -17,6 +17,7 @@ async function main() {
   const { db, schema, closeDb } = await import("@/lib/db");
   const { SIGNAL_TYPES, CADENCE_STEPS } = await import("@/lib/db/reference-data");
   const { createPasswordUser, findUserByEmail } = await import("@/lib/users");
+  const { MIN_PASSWORD_LENGTH } = await import("@/lib/constants");
 
   const withSample = process.argv.includes("--sample");
 
@@ -44,10 +45,10 @@ async function main() {
       console.log(`Admin: ${existing.email} (existing account, role set to admin).`);
     } else {
       const password = process.env.ADMIN_PASSWORD;
-      if (!password || password.length < 10) {
+      if (!password || password.length < MIN_PASSWORD_LENGTH) {
         // Don't fail the deploy: the app works, the admin just can't sign in yet.
         console.warn(
-          `WARNING: ${adminEmail} not created. Set ADMIN_PASSWORD (10+ characters) and redeploy to create the admin account.`,
+          `WARNING: ${adminEmail} not created. Set ADMIN_PASSWORD (${MIN_PASSWORD_LENGTH}+ characters) and redeploy to create the admin account.`,
         );
       } else {
         const admin = await createPasswordUser(db, {
@@ -66,8 +67,8 @@ async function main() {
   // ── Sample data (local / staging only) ──
   if (withSample) {
     const password = process.env.SEED_PASSWORD;
-    if (!password || password.length < 10) {
-      throw new Error("SEED_PASSWORD (10+ characters) is required for --sample.");
+    if (!password || password.length < MIN_PASSWORD_LENGTH) {
+      throw new Error(`SEED_PASSWORD (${MIN_PASSWORD_LENGTH}+ characters) is required for --sample.`);
     }
 
     async function ensureUser(email: string, name: string, role: "va" | "advisor") {

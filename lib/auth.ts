@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+import { MIN_PASSWORD_LENGTH } from "@/lib/constants";
 import { db, schema } from "@/lib/db";
 
 /**
@@ -21,7 +22,7 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     disableSignUp: true,
-    minPasswordLength: 10,
+    minPasswordLength: MIN_PASSWORD_LENGTH,
   },
   user: {
     additionalFields: {
